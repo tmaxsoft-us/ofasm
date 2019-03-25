@@ -1,0 +1,16 @@
+{
+    "entry_list" :
+    [
+        {
+            "entry_name" : "CALL01",
+            "fixed_parameter_list" : [
+                 {
+                     "param_size" : 30,
+                     "param_type" : "F"
+                 }
+             ]
+        }
+    ],
+    "program_name" : "CALL01",
+    "version" : 3
+}

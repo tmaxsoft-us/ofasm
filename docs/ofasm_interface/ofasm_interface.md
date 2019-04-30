@@ -14,18 +14,18 @@ There are three different types of OFASM interface
   
     - OFASM_VM_ENTRY interface enables the call from native program to OFASM program.  
 
-        ![](ofasm_vm_entry.png)
+        ![](./ofasm_vm_entry.png)
 
 1. OFASM_VM_EXIT
     - OFASM_VM_EXIT interface supports the call from OFASM program to native program.  
 
-        ![](ofasm_vm_exit.png)
+        ![](./ofasm_vm_exit.png)
 
 2. OFASM_VM_LOAD
     - OFASM_VM_LOAD interface is for EXEC CICS LOAD command used in native program.  
     - Please note that the program must be defined as ASSEMBLER in the online SD (System Definition) to use OFASM_VM_LOAD interface.
 
-        ![](ofasm_vm_load.png)
+        ![](./ofasm_vm_load.png)
 
 ## Section 2. OFASM interface Implementation
 

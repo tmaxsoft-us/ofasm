@@ -1,6 +1,6 @@
 # Chapter: OFASM interface
 
-This chapter covers the definition of the OFASM interface and how to create and use the it for different situations.  
+This chapter covers the definition of the OFASM interface and how to create it on different situations.  
 
 ## Section 1. Definition of OFASM interface
 
@@ -23,8 +23,7 @@ There are three different types of OFASM interface
 1. OFASM_VM_EXIT
     - OFASM_VM_EXIT interface supports the call from OFASM program to native program.  
 
-        ![](./ofasm_vm_exit.png)
-        
+        ![](./ofasm_vm_exit.png)   
         
     - Naming conventions of OFASM_VM_EXIT
         - cpp naming convension: PGM_OFASM_VM_EXIT.cpp
@@ -33,25 +32,27 @@ There are three different types of OFASM interface
 
 2. OFASM_VM_LOAD
     - OFASM_VM_LOAD interface is for EXEC CICS LOAD command used in native program.  
-    - **Please note that the program must be defined as ASSEMBLER in the online SD (System Definition) to use OFASM_VM_LOAD interface.**
-
+    
         ![](./ofasm_vm_load.png)
-        
-        
+    
     - Naming conventions of OFASM_VM_LOAD
         - cpp naming convension: PGM_OFASM_VM_LOAD.cpp
         - so naming convension : PGM_OFASM_VM_LOAD.so  
 
-## Section 2. OFASM interface Implementation
+    - **Please note that the program must be defined as ASSEMBLER in the online SD (System Definition) to use OFASM_VM_LOAD interface.**
+
+## Section 2. OFASM interface implementation
+
+This section demonstrate how to implement the OFASM interface.
 
 ### 1. OFASM_VM_ENTRY
 
 OFASM_VM_ENTRY interface supports static and dynamic parameter list.  
 
-1.1 Static parameter list
+1.1 Static parameter list (fixed parameter list)
 
-The parameter information is defined in compile time for Static parameter list.
-In static parameter list, you need to manually define the number of the paremeters and length of the each parameter.
+For static parameter list, the parameter information gets fixed in compile time.
+In this case, you need to manually define the number of the paremeters and length of the each parameter.
 
 example)
 ```cpp
@@ -104,9 +105,9 @@ int PGM(char *p0)
 }
 ```
 
-1.2 Dynamic parameter list
+1.2 Dynamic parameter list (variable parameter list)
 
-The dynamic parameter list set parameters in runtime based on the caller's call statement.
+The dynamic parameter list set the parameters at runtime based on the caller's call statement.
 This feature can be used only when '--enable-ofasm' is used in OFCOBOL or OFPLI.
 
 ```cpp
@@ -157,7 +158,7 @@ int PGM()
 
 ### 2. OFASM_VM_EXIT
 
-You need to specify the number of parameters being passed to the native program.
+Specify the number of parameters being passed to the native program.
 
 example)
 ```cpp
@@ -182,12 +183,13 @@ int PGM_OFASM_VM_EXIT(char* p0)
 
 ### 3. OFASM_VM_LOAD
 
+OFASM_VM_LOAD will require two function to be implemented.
+
 3.1 PGM_OFASM_VM_LOAD_SIZE
-    - This function returns the byte size of the loaded asm program.
-    - ptr_cnt value must be set based on how many pointers are being defined in the loaded program on 64-bit machine.
+    - This function is intended to return the byte size of the loaded asm program.
     
 3.2 PGM_OFASM_VM_LOAD_COPY
-    - 
+    - This function is intended the loaded assembler program into native memory.
 
 example)
 ```cpp
@@ -199,24 +201,11 @@ example)
 extern "C"
 {
 
-/**
- ** @brief PGM_OFASM_VM_LOAD_SIZE adjust size of native memory
-           since the pointer size is 8 bytes in native system while the assembler is 4 bytes
- ** @return byte size of PGM in native system view
- **/
 int PGM_OFASM_VM_LOAD_SIZE(int asm_size)
-{
-    int ptr_cnt = 0;
-    return asm_size + ( (sizeof(char*) - 4) * ptr_cnt );
+{    
+    return asm_size;
 }
 
-/**
- ** @brief PGM_OFASM_VM_LOAD_COPY
- ** @param asm_ptr address of PGM assembler
- ** @param cob_ptr address of PGM cobol
- ** @param asm_size byte size of PGM.asm
- ** @return 0: success, -1: error
- **/
 int PGM_OFASM_VM_LOAD_COPY(char *asm_ptr, char *cob_ptr, int asm_size)
 {
     memcpy(cob_ptr, asm_ptr, asm_size);
@@ -226,13 +215,18 @@ int PGM_OFASM_VM_LOAD_COPY(char *asm_ptr, char *cob_ptr, int asm_size)
 }
 ```
 
+## Section 3. Handling pointer type variables in the OFASM interface
 
-## Section 3. Using ofasmif to generate OFASM interface
+Handling pointer type variable in OFASM interface can be very tricky.
+Since the OFASM VM uses it's own virtualized memory, you need to convert the address value when
 
-You can generate OFASM_VM_ENTRY interface using ofasmif tool.  
-This is explained in Chapter 2. Assembler Interface Development on OpenFrame_ASM_4_User_Guide_v2.1.2_en.pdf manual.
+## Section 4. Using ofasmif to generate OFASM interface
 
-## Section 4. Examples
+You can automatically generate OFASM_VM_ENTRY interface using ofasmif tool.  
+ofasmif require JSON formatted input which describes the interface.
+For more information, please refer to Chapter 2. Assembler Interface Development on OpenFrame_ASM_4_User_Guide_v2.1.2_en.pdf manual.
+
+## Section 5. Examples
 
 ### Example1. Native -> OFASM -> Native call
 

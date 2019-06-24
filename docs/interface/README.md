@@ -14,29 +14,25 @@ There are three different types of OFASM interface
 
 1. OFASM_VM_ENTRY  
   
+    ![ofasm_vm_entry](ofasm_vm_entry.png "OFASM_VM_ENTRY")
     - OFASM_VM_ENTRY interface enables the call from native program to OFASM program.  
-
-        ![](/docs/ofasm_interface/ofasm_vm_entry.png)
-        
     - Naming conventions of OFASM_VM_ENTRY
         - cpp naming convension: PGM_OFASM_VM_ENTRY.cpp
         - so naming convension : PGM.so  
 
 1. OFASM_VM_EXIT
-    - OFASM_VM_EXIT interface supports the call from OFASM program to native program.  
 
-        ![](/docs/ofasm_interface/ofasm_vm_exit.png)   
-        
+    ![ofasm_vm_exit](ofasm_vm_exit.png "OFASM_VM_EXIT")   
+    - OFASM_VM_EXIT interface supports the call from OFASM program to native program.  
     - Naming conventions of OFASM_VM_EXIT
         - cpp naming convension: PGM_OFASM_VM_EXIT.cpp
         - so naming convension : PGM_OFASM_VM_EXIT.so  
 
 
 2. OFASM_VM_LOAD
+
+    ![ofasm_vm_load](ofasm_vm_load.png "OFASM_VM_LOAD")
     - OFASM_VM_LOAD interface is for EXEC CICS LOAD command used in native program.  
-    
-        ![](/docs/ofasm_interface/ofasm_vm_load.png)
-    
     - Naming conventions of OFASM_VM_LOAD
         - cpp naming convension: PGM_OFASM_VM_LOAD.cpp
         - so naming convension : PGM_OFASM_VM_LOAD.so  

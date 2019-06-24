@@ -1,1 +1,1 @@
-{% include_relative ofasm_interface/ofasm_interface.md %}
+Welcome to ofasm docs

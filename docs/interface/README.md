@@ -1,53 +1,48 @@
-readme
-
-# Chapter: OFASM interface
+# Chapter 1. OFASM interface
 
 This chapter covers the definition of the OFASM interface and how to create it on different situations.  
 
-## Section 1. Definition of OFASM interface
+## Section 1. Definition of OFASM interface  
 
-OFASM binary has it's own binary format (.asmo) and therefore is not compatible with the linux native binary (.so). Due to this fact, it is impossible to directly call or load between programs which are in OFASM binary format and native binary format.  
+OFASM binary has it's own binary format (.asmo) and therefore is not compatible with the linux native binary (.so). Due to this fact, it is impossible to directly call or load between programs which are in OFASM binary format and native binary format. To make the call or load happen, we need the OFASM interface.  
 
-To make the call or load happen, we need the OFASM interface.
+There are three different types of OFASM interface.  
 
-There are three different types of OFASM interface
-
-1. OFASM_VM_ENTRY  
+1. OFASM_VM_ENTRY   
   
-    ![ofasm_vm_entry](ofasm_vm_entry.png "OFASM_VM_ENTRY")
     - OFASM_VM_ENTRY interface enables the call from native program to OFASM program.  
     - Naming conventions of OFASM_VM_ENTRY
         - cpp naming convension: PGM_OFASM_VM_ENTRY.cpp
         - so naming convension : PGM.so  
+    ![interface_ofasm_vm_entry](interface_ofasm_vm_entry.png)
 
 1. OFASM_VM_EXIT
 
-    ![ofasm_vm_exit](ofasm_vm_exit.png "OFASM_VM_EXIT")   
     - OFASM_VM_EXIT interface supports the call from OFASM program to native program.  
     - Naming conventions of OFASM_VM_EXIT
         - cpp naming convension: PGM_OFASM_VM_EXIT.cpp
         - so naming convension : PGM_OFASM_VM_EXIT.so  
+    ![interface_ofasm_vm_exit](interface_ofasm_vm_exit.png)   
 
+1. OFASM_VM_LOAD
 
-2. OFASM_VM_LOAD
-
-    ![ofasm_vm_load](ofasm_vm_load.png "OFASM_VM_LOAD")
     - OFASM_VM_LOAD interface is for EXEC CICS LOAD command used in native program.  
     - Naming conventions of OFASM_VM_LOAD
         - cpp naming convension: PGM_OFASM_VM_LOAD.cpp
         - so naming convension : PGM_OFASM_VM_LOAD.so  
-
     - **Please note that the program must be defined as ASSEMBLER in the online SD (System Definition) to use OFASM_VM_LOAD interface.**
+    ![interface_ofasm_vm_load](interface_ofasm_vm_load.png)
 
-## Section 2. OFASM interface implementation
+
+## Section 2. OFASM interface implementation  
 
 This section demonstrate how to implement the OFASM interface.
 
-### 1. OFASM_VM_ENTRY
+### 1. OFASM_VM_ENTRY  
 
 OFASM_VM_ENTRY interface supports static and dynamic parameter list.  
 
-1.1 Static parameter list (fixed parameter list)
+#### 1.1. Static parameter list (fixed parameter list)  \
 
 For static parameter list, the parameter information gets fixed in compile time.
 In this case, you need to manually define the number of the paremeters and length of the each parameter.
@@ -103,7 +98,7 @@ int PGM(char *p0)
 }
 ```
 
-1.2 Dynamic parameter list (variable parameter list)
+#### 1.2. Dynamic parameter list (variable parameter list)  \
 
 The dynamic parameter list set the parameters at runtime based on the caller's call statement.
 This feature can be used only when '--enable-ofasm' is used in OFCOBOL or OFPLI.
@@ -156,7 +151,7 @@ int PGM()
 
 ### 2. OFASM_VM_EXIT
 
-Specify the number of parameters being passed to the native program.
+OFASM_VM_EXIT interface need to define number of parameters being passed to the native program.
 
 example)
 ```cpp
@@ -181,13 +176,10 @@ int PGM_OFASM_VM_EXIT(char* p0)
 
 ### 3. OFASM_VM_LOAD
 
-OFASM_VM_LOAD will require two function to be implemented.
+OFASM_VM_LOAD will require two function to be implemented.   
 
-3.1 PGM_OFASM_VM_LOAD_SIZE
-    - This function is intended to return the byte size of the loaded asm program.
-    
-3.2 PGM_OFASM_VM_LOAD_COPY
-    - This function is intended the loaded assembler program into native memory.
+1. PGM_OFASM_VM_LOAD_SIZE is intended to return the byte size of the loaded asm program. 
+1. PGM_OFASM_VM_LOAD_COPY is intended the loaded assembler program into native memory.
 
 example)
 ```cpp
@@ -213,18 +205,33 @@ int PGM_OFASM_VM_LOAD_COPY(char *asm_ptr, char *cob_ptr, int asm_size)
 }
 ```
 
-## Section 3. Handling pointer type variables in the OFASM interface
+## Section 3. Handling pointer type parameter
 
-Handling pointer type variable in OFASM interface can be very tricky.
-Since the OFASM VM uses it's own virtualized memory, you need to convert the address value when
+Handling pointer type parameter in OFASM interface can be very tricky.
+Since the OFASM VM uses it's own virtualized memory, you need to convert the address value between native and OFASM memory.
 
-## Section 4. Using ofasmif to generate OFASM interface
+## Section 4. Compiling the interface file
+
+1. OFASM_VM_ENTRY
+```bash
+g++ -shared -fPIC -o PGM.so PGM_OFASM_VM_ENTRY.cpp -L$OFASM_HOME/lib -lofasmVM
+```
+1. OFASM_VM_EXIT
+```bash
+g++ -shared -fPIC -o PGM_OFASM_VM_EXIT.so PGM_OFASM_VM_EXIT.cpp -L$OFASM_HOME/lib -lofasmVM
+```
+1. OFASM_VM_LOAD
+```bash
+g++ -shared -fPIC -o PGM_OFASM_VM_LOAD.so PGM_OFASM_VM_LOAD.cpp -L$OFASM_HOME/lib -lofasmVM
+```
+
+## Section 5. Using ofasmif to generate OFASM interface
 
 You can automatically generate OFASM_VM_ENTRY interface using ofasmif tool.  
 ofasmif require JSON formatted input which describes the interface.
 For more information, please refer to Chapter 2. Assembler Interface Development on OpenFrame_ASM_4_User_Guide_v2.1.2_en.pdf manual.
 
-## Section 5. Examples
+## Section 6. Examples
 
 ### Example1. Native -> OFASM -> Native call
 

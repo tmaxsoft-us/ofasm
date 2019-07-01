@@ -14,6 +14,7 @@ There are three different types of OFASM interface.
     - Naming conventions of OFASM_VM_ENTRY
         - cpp naming convension: PGM_OFASM_VM_ENTRY.cpp
         - so naming convension : PGM.so  
+        
     ![interface_ofasm_vm_entry](interface_ofasm_vm_entry.png)
 
 1. OFASM_VM_EXIT
@@ -22,6 +23,7 @@ There are three different types of OFASM interface.
     - Naming conventions of OFASM_VM_EXIT
         - cpp naming convension: PGM_OFASM_VM_EXIT.cpp
         - so naming convension : PGM_OFASM_VM_EXIT.so  
+        
     ![interface_ofasm_vm_exit](interface_ofasm_vm_exit.png)   
 
 1. OFASM_VM_LOAD
@@ -30,7 +32,8 @@ There are three different types of OFASM interface.
     - Naming conventions of OFASM_VM_LOAD
         - cpp naming convension: PGM_OFASM_VM_LOAD.cpp
         - so naming convension : PGM_OFASM_VM_LOAD.so  
-    - **Please note that the program must be defined as ASSEMBLER in the online SD (System Definition) to use OFASM_VM_LOAD interface.**
+    - **Please note that the program must be defined as ASSEMBLER in the online SD (System Definition) to use OFASM_VM_LOAD interface.**  
+    
     ![interface_ofasm_vm_load](interface_ofasm_vm_load.png)
 
 

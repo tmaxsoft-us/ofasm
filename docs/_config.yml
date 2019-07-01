@@ -1,5 +1,3 @@
-remote_theme: tomjoht/documentation-theme-jekyll
-
 plugins:
   - jekyll-relative-links
 

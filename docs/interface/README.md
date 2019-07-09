@@ -1,6 +1,6 @@
 # Chapter 1. OFASM interface
 
-This chapter covers the definition of the OFASM interface and how to create it on different situations.  
+This chapter covers the definition of the OFASM interface and describes how to create it on different situations.  
 
 ## Section 1. Definition of OFASM interface  
 
@@ -36,7 +36,6 @@ There are three different types of OFASM interface.
     
     ![interface_ofasm_vm_load](interface_ofasm_vm_load.png)
 
-
 ## Section 2. OFASM interface implementation  
 
 This section demonstrate how to implement the OFASM interface.
@@ -45,12 +44,12 @@ This section demonstrate how to implement the OFASM interface.
 
 OFASM_VM_ENTRY interface supports static and dynamic parameter list.  
 
-#### 1.1. Static parameter list (fixed parameter list)  \
+#### 1.1. Static parameter list (fixed parameter list)  
 
 For static parameter list, the parameter information gets fixed in compile time.
-In this case, you need to manually define the number of the paremeters and length of the each parameter.
+In this case, you need to manually define the number of the paremeters and byte length of the each parameter.
 
-example)
+Example. Static parameter list with one parameter which is 30 bytes long.
 ```cpp
 #include <stdlib.h>
 #include <string.h>
@@ -101,11 +100,12 @@ int PGM(char *p0)
 }
 ```
 
-#### 1.2. Dynamic parameter list (variable parameter list)  \
-
-The dynamic parameter list set the parameters at runtime based on the caller's call statement.
+#### 1.2. Dynamic parameter list (variable parameter list)  
+   
+The dynamic parameter list sets the parameter information at runtime based on the caller's call statement.
 This feature can be used only when '--enable-ofasm' is used in OFCOBOL or OFPLI.
 
+Example. Dynamic parameter list with maxinum 10 parameters
 ```cpp
 #include <stdlib.h>
 #include <string.h>
@@ -127,23 +127,56 @@ extern "C"
 
 extern int ofcom_call_parm_get(int index, char* func_name, int *count, int **size_list);
 
-/** @fn       int PGM()
+/** @fn       int PGM(char* p0, char* p1, char* p2, char* p3, char* p4, char* p5, char* p6, char* p7, char* p8, char *p9)
 *   @brief    Enter OFASM VM entry method
 *   @details  Make up ofasm parameters and then enter OFASM VM entry using entry name
+*   @params   p0 0th parameter in PLIST
+*   @params   p1 1st parameter in PLIST
+*   @params   p2 2nd parameter in PLIST
+*   @params   p3 3rd parameter in PLIST
+*   @params   p4 4th parameter in PLIST
+*   @params   p5 5th parameter in PLIST
+*   @params   p6 6th parameter in PLIST
+*   @params   p7 7th parameter in PLIST
+*   @params   p8 8th parameter in PLIST
+*   @params   p9 9th parameter in PLIST
 */
-int PGM()
+int PGM(char *p0, char *p1, char *p2, char *p3, char *p4, char *p5, char *p6, char *p7, char *p8, char *p9)
 {
     /* declare local arguments */
     int rc;
     int paramCnt;
     char prgName[64] = {0};
     int *sizeList;
-    ofasm_param param[0];
+    ofasm_param param[10];
 
-    /* set params */
-    /* set param count */
-    paramCnt = 0;
+    /* initiallize parameter */
+    for(int i = 0; i < 10; i++)
+    {
+        param[i].addr = NULL;
+        param[i].length = 0;
+        param[i].elemListAddr = NULL;
+        param[i].elemCnt = 0;
+    }
 
+    /* set variable parameter*/
+    ofcom_call_parm_get(0, prgName, &paramCnt, &sizeList);
+
+    param[0].addr = p0;
+    param[1].addr = p1;
+    param[2].addr = p2;
+    param[3].addr = p3;
+    param[4].addr = p4;
+    param[5].addr = p5;
+    param[6].addr = p6;
+    param[7].addr = p7;
+    param[8].addr = p8;
+    param[9].addr = p9;
+
+    for(int i = 0; i < paramCnt; i++)
+    {
+        param[i].length = sizeList[i];
+    }
     /* call VM */
     rc = OFASM_VM_ENTRY("PGM", "PGM", param, paramCnt);
     return rc;
@@ -156,7 +189,7 @@ int PGM()
 
 OFASM_VM_EXIT interface need to define number of parameters being passed to the native program.
 
-example)
+Example. OFASM_VM_EXIT interface without parameter
 ```cpp
 #include <stdlib.h>
 #include <string.h>
@@ -165,12 +198,33 @@ example)
 extern "C"
 {
 
-extern int PGM(char* p0);
+extern int PGM();
 
-int PGM_OFASM_VM_EXIT(char* p0)
+int PGM_OFASM_VM_EXIT()
 {
     /* call VM */
-    int rc = PGM(p0);
+    int rc = PGM();
+    return rc;
+}
+
+}
+```
+
+Example. OFASM_VM_EXIT interface with 3 parameters
+```cpp
+#include <stdlib.h>
+#include <string.h>
+#include <arpa/inet.h>
+
+extern "C"
+{
+
+extern int PGM(char* p0, char* p1, char* p2);
+
+int PGM_OFASM_VM_EXIT(char* p0, char* p1, char* p2)
+{
+    /* call VM */
+    int rc = PGM(p0, p1, p2);
     return rc;
 }
 
@@ -182,9 +236,10 @@ int PGM_OFASM_VM_EXIT(char* p0)
 OFASM_VM_LOAD will require two function to be implemented.   
 
 1. PGM_OFASM_VM_LOAD_SIZE is intended to return the byte size of the loaded asm program. 
-1. PGM_OFASM_VM_LOAD_COPY is intended the loaded assembler program into native memory.
+2. PGM_OFASM_VM_LOAD_COPY is intended the loaded assembler program into native memory.
 
-example)
+Example. OFASM_VM_LOAD interface
+
 ```cpp
 #include <stdlib.h>
 #include <string.h>
@@ -211,32 +266,335 @@ int PGM_OFASM_VM_LOAD_COPY(char *asm_ptr, char *cob_ptr, int asm_size)
 ## Section 3. Handling pointer type parameter
 
 Handling pointer type parameter in OFASM interface can be very tricky.
-Since the OFASM VM uses it's own virtualized memory, you need to convert the address value between native and OFASM memory.
+Since the OFASM VM uses it's own virtualized memory, you need to convert the address value between native and OFASM memory in runtime.
+Also, you need to consider the byte size difference when running the program in the 64-bit system.
+
+### 1. OFASM_VM_ENTRY
+
+Consider below COBOL program which passes a parameter to the assembler program while having a pointer variable in the parameter.
+
+```cobol
+       01  PGM-COMAREA.
+           03  PGM-FUNCTION-REQUEST-CODE                  PIC X.
+               88  PGM-BUILD-FUNCTION              VALUE  'B'.
+               88  PGM-LOCATE-FUNCTION             VALUE  'L'.
+           03  PGM-RETURN-CODE                            PIC X.
+               88  PGM-RETURN-OK                   VALUE  SPACE.
+               88  PGM-RETURN-DUPE                 VALUE  'D'.
+               88  PGM-RETURN-NOT-FOUND            VALUE  'N'.
+               88  PGM-RETURN-STORAGE-FAIL         VALUE  'S'.
+               88  PGM-RETURN-INVALID-REQ          VALUE  'I'.
+           03  PGM-TABLE-ENTRY-SIZE                COMP   PIC 9(4).
+           03  PGM-TABLE-ENTRY-POINTER             USAGE POINTER.
+           03  PGM-ITEM-NO                         COMP-3 PIC 9(5).
+           03  PGM-HIGH-VALID-ITEM                 COMP-3 PIC 9(5).
+...
+           CALL 'PGM' USING BY REFERENCE PGM-COMAREA.
+```
+
+To create an OFASM_VM_ENTRY interface for this case, you first have to define two structures which are the views on the parameter from the COBOL and the assembler.
+In this particular example, PGM_P0_ASM is representing the view from the assembler and PGM_P0_COB is the view from the COBOL.  
+
+```cpp
+struct  __attribute__((packed)) PGM_P0_ASM
+{
+    uint8_t  tabreqcd;
+    uint8_t  tabretcd;
+    uint16_t tabsize;
+    uint32_t tabeaddr;
+    uint32_t tabitemno;
+    uint32_t tabhvalitem;
+};
+
+struct  __attribute__((packed)) PGM_P0_COB
+{
+    uint8_t  tabreqcd;
+    uint8_t  tabretcd;
+    uint16_t tabsize;
+    char*    tabeaddr;
+    uint32_t tabitemno;
+    uint32_t tabhvalitem;
+};
+```
+  
+The next step is to push & pop parameter information by using OFASM_PUSH_PARM & OFASM_POP_PARM function before and after the calling the OFASM VM.
+Please note that the OFASM_PUSH_PARM & OFASM_POP_PARM function is used to push & pop pointer parameter information to OFASM VM. Please referer to PGM_P0_OFASM_PUSH & PGM_P0_OFASM_POP implemented in below code.
+
+```cpp
+int PGM_P0_OFASM_PUSH(PGM_P0_ASM* p0_asm, PGM_P0_COB* p0_cob)
+{
+    p0_asm->tabreqcd    = p0_cob->tabreqcd;
+    p0_asm->tabretcd    = p0_cob->tabretcd;
+    p0_asm->tabsize     = p0_cob->tabsize;
+    p0_asm->tabeaddr    = OFASM_PUSH_PARAM(p0_cob->tabeaddr, htonl(p0_cob->tabsize));
+    p0_asm->tabitemno   = p0_cob->tabitemno;
+    p0_asm->tabhvalitem = p0_cob->tabhvalitem;
+
+    return 0;
+}
+
+int PGM_P0_OFASM_POP(PGM_P0_ASM* p0_asm, PGM_P0_COB* p0_cob)
+{
+    p0_cob->tabreqcd    = p0_asm->tabreqcd;
+    p0_cob->tabretcd    = p0_asm->tabretcd;
+    p0_cob->tabsize     = p0_asm->tabsize;
+    p0_cob->tabeaddr    = OFASM_POP_PARAM(p0_asm->tabeaddr);
+    p0_cob->tabitemno   = p0_asm->tabitemno;
+    p0_cob->tabhvalitem = p0_asm->tabhvalitem;
+
+    return 0;
+}
+
+extern "C"
+{
+
+extern int ofcom_call_parm_get(int index, char* func_name, int *count, int **size_list);
+
+int PGM(char *p0, char *p1)
+{
+    /* declare local arguments */
+    int rc;
+    int paramCnt = 1;
+    char prgName[64] = {0};
+    int* sizeList;
+    ofasm_param param[2];
+    PGM_P0_ASM  p0_asm;
+    PGM_P0_COB* p0_cob = (PGM_P0_COB*) p0;
+
+    /* push parameter */
+    PGM_P0_OFASM_PUSH(&p0_asm, p0_cob);
+
+    param[0].addr = (char*) &p0_asm;
+    param[0].length = sizeof(PGM_P0_ASM);
+    param[0].elemCnt = 0;
+    param[0].elemListAddr = NULL;
+
+    /* call VM */
+    rc = OFASM_VM_ENTRY("PGM", "PGM", param, paramCnt);
+
+    /* pop parameter */
+    PGM_P0_OFASM_POP(&p0_asm, p0_cob);
+
+    return rc;
+}
+
+}
+```
+
+### 2. OFASM_VM_EXIT
+
+```
+          LA    PLIST,PARAM1
+          OI    PLIST,X'80'
+          CALL  PGM,PLIST
+...
+PARAM1    DC    A(DATA)
+DATA      DC    CL256'SOME DATA'
+```
+
+```cpp
+struct  __attribute__((packed)) PGM_P0_ASM
+{
+    uint32_t tabeaddr;
+};
+
+struct  __attribute__((packed)) PGM_P0_COB
+{
+    char*    tabeaddr;
+};
+```
+
+```cpp
+#include<stdio.h>
+#include<stdlib.h>
+
+extern "C"
+{
+
+ extern void OFASM_COPY_VIRTUAL_TO_OFASM(unsigned int dest, char* src, int length)
+ extern char* OFASM_GET_VIRTUAL_ADDR(unsigned int lc);
+ extern lc OFASM_GET_ASM_ADDR(unsigned char*);
+ extern int PGM(char *p0);
+
+int PGM_P0_OFASM_PUSH(PGM_P0_ASM* p0_asm, PGM_P0_COB* p0_cob)
+{
+    
+    p0_asm->tabeaddr    = OFASM_GET_ASM_ADDR(p0_cob->tabeaddr);
+
+    return 0;
+}
+
+int PGM_P0_OFASM_POP(PGM_P0_ASM* p0_asm, PGM_P0_COB* p0_cob)
+{
+    p0_cob->tabeaddr = OFASM_GET_VIRTUAL_ADDR(p0_asm->tabeaddr);
+    
+
+    return 0;
+}
+
+ extern int PGM_OFASM_VM_EXIT(char *p0)
+{
+   PGM_P0_COB p0_cob;
+
+   PGM_P0_OFASM_POP(p0, &p0_cob);
+   int rc = PGM(&p0_cob);
+   PGM_P0_OFASM_PUSH(p0, &p0_cob);
+
+   return rc;
+ }
+}
+
+```
+
+### 3. OFASM_VM_LOAD
+
+In below example, there is a pointer at the front of the assembler program which points the DATA in the program.
+
+```asm
+PGM      CSECT
+         DC    A(DATA)    ADDRESS OF FIRST ENTRY
+         DC    F'0'       FILLER
+DATA     DC    CL256'SOME DATA'
+```
+
+Just like other type of interface which have a pointer, you first need to define two views of the memory, native and assembler.
+
+```cpp
+/**
+ * @brief The PGM_STRUCT_ASM struct (assembler program's view on PGM)
+ */
+struct __attribute__((packed)) PGM_STRUCT_ASM {
+    uint32_t  addr;
+    uint32_t  filler;
+    uint8_t   data;
+};
+
+/**
+ * @brief The PGM_STRUCT_COB struct (cobol program's view on PGM)
+ */
+struct __attribute__((packed)) PGM_STRUCT_COB {
+    uint8_t*  addr;
+    uint32_t  filler;
+    uint8_t   data;
+};
+```
+
+Now you need to adjust the program size in PGM_OFASM_VM_LOAD_SIZE function when you use 64-bit system. For the last, you need to build the native memory from the OFASM VM memory by implementing PGM_OFASM_VM_LOAD_COPY function.
+
+```cpp
+#include <stdlib.h>
+#include <string.h>
+#include <arpa/inet.h>
+#include <stdio.h>
+
+extern "C"
+{
+
+/**
+ ** @brief PGM_OFASM_VM_LOAD_SIZE adjust native memory size
+ ** @return byte size of PGM in native system view
+ **/
+int PGM_OFASM_VM_LOAD_SIZE(int asm_size)
+{
+    int ptr_cnt = 1;
+    return asm_size + ( (sizeof(char*) - 4) * ptr_cnt );
+}
+
+/**
+ ** @brief PGM_OFASM_VM_LOAD_COPY adjust native memory contents
+ ** @param asm_ptr address of PGM assembler
+ ** @param cob_ptr address of PGM cobol
+ ** @param asm_size byte size of PGM.asm
+ ** @return 0: success, -1: error
+ **/
+int PGM_OFASM_VM_LOAD_COPY(char *asm_ptr, char *cob_ptr, int asm_size)
+{
+    /* handle pointers */
+    PGM_STRUCT_COB* struct_cob_ptr = (PGM_STRUCT_COB*) cob_ptr;
+    struct_cob_ptr->addr   = &(struct_cob_ptr->first);
+
+    /* handle non-pointers */
+    memcpy( ((char*)cob_ptr) + sizeof(char*), ((char*)asm_ptr) + 4 , asm_size - 4);
+    return 0;
+}
+
+}
+```
 
 ## Section 4. Compiling the interface file
 
-1. OFASM_VM_ENTRY
+### 1. OFASM_VM_ENTRY
 ```bash
 g++ -shared -fPIC -o PGM.so PGM_OFASM_VM_ENTRY.cpp -L$OFASM_HOME/lib -lofasmVM
 ```
-1. OFASM_VM_EXIT
+
+### 2. OFASM_VM_EXIT
 ```bash
 g++ -shared -fPIC -o PGM_OFASM_VM_EXIT.so PGM_OFASM_VM_EXIT.cpp -L$OFASM_HOME/lib -lofasmVM
 ```
-1. OFASM_VM_LOAD
+
+### 3. OFASM_VM_LOAD
 ```bash
 g++ -shared -fPIC -o PGM_OFASM_VM_LOAD.so PGM_OFASM_VM_LOAD.cpp -L$OFASM_HOME/lib -lofasmVM
 ```
 
 ## Section 5. Using ofasmif to generate OFASM interface
 
-You can automatically generate OFASM_VM_ENTRY interface using ofasmif tool.  
-ofasmif require JSON formatted input which describes the interface.
-For more information, please refer to Chapter 2. Assembler Interface Development on OpenFrame_ASM_4_User_Guide_v2.1.2_en.pdf manual.
+You can generate OFASM_VM_ENTRY interface file using ofasmif tool. ofasmif requires JSON formatted input which is described below.
 
-## Section 6. Examples
+```
+{
+    "entry_list":[
+    {
+        "entry_name" : "ENTRYNAME1",
+        "fixed_parameter_list" : [
+        {
+            "param_size" : (PARASIZE),
+            "param_type" : (PARATYPE)
+        },]
+    },
+    {
+        "entry_name" : "ENTRYNAME2",
+        "variable_parameter_list" : 
+        {    
+            "max_length" : (MAXLEN)
+        }
+    }],
+    "program_name" : "PROGNAME",
+    "version" : 3
+}
+```
 
-### Example1. Native -> OFASM -> Native call
+1. "entry_list": JSONLIST
+    - This json list will have an array of json object which describes the entry
+    - each entry will contain the name of the entry and the parameter list information
+2. "entry_name" : STRING
+    - This value must match with the entry point name in the assembler program
+3. "fixed_parameter_list": JSONLIST
+    - This json list will have an arrary of fixed parameter type json object
+4. "param_type" : STRING (F) or (V)
+    -F: fixed length parameter
+    -V: variable length parameter. This type is used when an assembler program is called by the JCL
+5. "param_size" : INTEGER
+    - define the byte size of the parameter
+    - this is used when fixed length parameter is being used
+6. "variable_parameter_list" : JSONOBJECT
+    - This is only available with the OFCOBOL or OFPLI is being used and having --enable-ofasm option at compile time.
+7. "max_length" : INTEGER
+    - Defines the maximum number of parameter can be passed to the OFASM VM.
+    - This is only used in variable parameter list
+8. "program_name" : STRING
+    - This value must match with the name of the asmo object
+9. "version" : INTEGER (3)
+    - Defines the input json format version for ofasmif
 
-https://github.com/tmaxsoft-us/ofasm/tree/master/sample/CALL
+After creating the JSON file, you can use below command to generate the interface file.
 
+```
+ofasmif -i PGM.json
+```
+
+## Section 6. Reference
+
+1. Native -> OFASM -> Native call
+    - https://github.com/tmaxsoft-us/ofasm/tree/master/sample/CALL

@@ -4,13 +4,13 @@ This chapter covers the definition of the OFASM interface and describes how to c
 
 ## Section 1. Definition of OFASM interface  
 
-OFASM binary has it's own binary format (.asmo) and therefore is not compatible with the linux native binary (.so). Due to this fact, it is impossible to directly call or load between programs which are in OFASM binary format and native binary format. To make the call or load happen, we need the OFASM interface.  
+OFASM binary has its own binary format (.asmo) which isn't compatible with the Linux native binary format (.so). Thus, it is impossible to directly call or load among a program in OFASM binary format and one in native binary format. To make the call or load among them, appropriate OFASM interface is required. 
 
-There are three different types of OFASM interface.  
+There are three types of OFASM interface.  
 
 1. OFASM_VM_ENTRY  
   
-    - OFASM_VM_ENTRY interface enables the call from native program to OFASM program.  
+    - This type of interface is used in case the native program directly calls OFASM program.  
     - Naming conventions of OFASM_VM_ENTRY
         - cpp naming convension: PGM_OFASM_VM_ENTRY.cpp
         - so naming convension : PGM.so  
@@ -19,7 +19,7 @@ There are three different types of OFASM interface.
 
 1. OFASM_VM_EXIT
 
-    - OFASM_VM_EXIT interface supports the call from OFASM program to native program.  
+    - This type of interface is used in case OFASM program directly calls the native program 
     - Naming conventions of OFASM_VM_EXIT
         - cpp naming convension: PGM_OFASM_VM_EXIT.cpp
         - so naming convension : PGM_OFASM_VM_EXIT.so  
@@ -28,17 +28,17 @@ There are three different types of OFASM interface.
 
 1. OFASM_VM_LOAD
 
-    - OFASM_VM_LOAD interface is for EXEC CICS LOAD command used in native program.  
+    - This type of interface is used in case the native program uses EXTC CICS LOAD command.  
     - Naming conventions of OFASM_VM_LOAD
         - cpp naming convension: PGM_OFASM_VM_LOAD.cpp
         - so naming convension : PGM_OFASM_VM_LOAD.so  
     ![interface_ofasm_vm_load](interface_ofasm_vm_load.png)
 
-> **NOTE: Given program must be defined as ASSEMBLER in the online SD (System Definition) to use OFASM_VM_LOAD interface.**  
+> **NOTE: The name of the given program(OFASM) must be defined in the online System Definition (SD) as ASSEMBLER to use OFASM_VM_LOAD interface**  
 
-## Section 2. OFASM interface implementation  
+## Section 2. Iplementation of OFASM interface  
 
-This section demonstrate how to implement the OFASM interface.
+This section demonstrates how to implement the OFASM interfaces.
 
 ### 1. OFASM_VM_ENTRY  
 
@@ -47,7 +47,7 @@ OFASM_VM_ENTRY interface supports static and dynamic parameter list.
 #### 1.1. Static parameter list (fixed parameter list)  
 
 For static parameter list, the parameter information gets fixed in compile time.
-In this case, you need to manually define the number of the parameters and byte length of the each parameter.
+In this case, the number of the parameters and byte length of each parameter need to be defined manually.
 
 Example. Static parameter list with one parameter which is 30 bytes long.
 
@@ -103,7 +103,7 @@ int PGM(char *p0)
 
 #### 1.2. Dynamic parameter list (variable parameter list)  
 
-The dynamic parameter list sets the parameter information at runtime based on the information that we can get from ofcom_call_parm_get() function. Please note that the ofcom_call_parm_push() function must be issued before calling the callee program to store the parameter information and ofcom_call_parm_pop() function needs to be executed after returning from the callee to free the parameter information. These push & pop functions gets added automatically by the OFCOBOL or OFPLI compiler when '--enable-ofasm' option is being used. For other compilers, you need to manually add push & pop functions to use dynamic parameter list.
+The dynamic parameter list sets the parameter information at runtime based on the information from ofcom_call_parm_get() function. Please note that the ofcom_call_parm_push() function must be issued before calling the callee program to store the parameter information and ofcom_call_parm_pop() function needs to be executed after returning from the callee to free the parameter information. These push & pop functions are automatically added when the option '--enable-ofasm' is used in OFCOBOL or OFPLI compiler. In other compilers, the push & pop functions may need to be manually added.
 
 Example. Dynamic parameter list with maximum 10 parameters
 
@@ -188,7 +188,7 @@ int PGM(char *p0, char *p1, char *p2, char *p3, char *p4, char *p5, char *p6, ch
 
 ### 2. OFASM_VM_EXIT
 
-OFASM_VM_EXIT interface need to define number of parameters being passed to the native program.
+OFASM_VM_EXIT interface needs to define the number of parameters being passed to the native program.
 
 Example. OFASM_VM_EXIT interface without parameter
 
@@ -236,10 +236,10 @@ int PGM_OFASM_VM_EXIT(char* p0, char* p1, char* p2)
 
 ### 3. OFASM_VM_LOAD
 
-OFASM_VM_LOAD will require two function to be implemented.  
+OFASM_VM_LOAD requires below two functions.  
 
-1. PGM_OFASM_VM_LOAD_SIZE is intended to return the byte size of the loaded asm program. 
-2. PGM_OFASM_VM_LOAD_COPY is intended the loaded assembler program into native memory.
+1. PGM_OFASM_VM_LOAD_SIZE() is for the returning byte size of the loaded assembler program. 
+2. PGM_OFASM_VM_LOAD_COPY() is for the loading the assembler program into native memory.
 
 Example. OFASM_VM_LOAD interface
 

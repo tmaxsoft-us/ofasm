@@ -36,7 +36,7 @@ There are three types of OFASM interface.
 
 > **NOTE: The name of the given program(OFASM) must be defined in the online System Definition (SD) as ASSEMBLER to use OFASM_VM_LOAD interface**  
 
-## Section 2. Iplementation of OFASM interface  
+## Section 2. Implementation of OFASM interface  
 
 This section demonstrates how to implement the OFASM interfaces.
 
@@ -268,13 +268,11 @@ int PGM_OFASM_VM_LOAD_COPY(char *asm_ptr, char *cob_ptr, int asm_size)
 
 ## Section 3. Handling pointer type parameter
 
-Handling pointer type parameter in OFASM interface can be very tricky.
-Since the OFASM VM uses it's own virtualized memory, you need to convert the address value between native and OFASM memory in runtime.
-Also, you need to consider the byte size difference when running the program in the 64-bit system.
+Handling the pointer type parameter in OFASM interface is not simple. Since the OFASM VM uses its own virtual memory, the address value between native and OFASM memory needs to be converted in runtime. Also, if the programs run in the 64-bit system, the byte size difference between them must be considered.
 
 ### 1. OFASM_VM_ENTRY
 
-Consider below COBOL program which passes a parameter to a assembler program while having a pointer variable in the parameter.
+Let's see the below COBOL program passing a parameter which contains a pointer variable to the assembler program.
 
 ```cobol
        01  PGM-COMAREA.
@@ -295,8 +293,8 @@ Consider below COBOL program which passes a parameter to a assembler program whi
            CALL 'PGM' USING BY REFERENCE PGM-COMAREA.
 ```
 
-To create an OFASM_VM_ENTRY interface on this case, you first have to define two structures which are the views on the parameter from the COBOL and the assembler.
-In this particular example, PGM_P0_ASM is representing the view from the assembler and PGM_P0_COB is the view from the COBOL.  
+To create an OFASM_VM_ENTRY interface, two structures that are the view of parameters from the COBOL and the assembler need to be defined first. 
+In the below example, PGM_P0_ASM  represents the view of the assembler and PGM_P0_COB represents the view of the COBOL.  
 
 ```cpp
 struct  __attribute__((packed)) PGM_P0_ASM
@@ -320,8 +318,8 @@ struct  __attribute__((packed)) PGM_P0_COB
 };
 ```
   
-The next step is to push & pop parameter information by using OFASM_PUSH_PARM & OFASM_POP_PARM function before and after the calling the OFASM VM.
-Please note that the OFASM_PUSH_PARM & OFASM_POP_PARM function is used to push & pop pointer parameter information to OFASM VM. Please refer to PGM_P0_OFASM_PUSH & PGM_P0_OFASM_POP implemented in below code.
+The view structures, which created in the above step, are used in the functions, OFASM_PUSH_PARM & OFASM_POP_PARM, to push & pop the parameter before and after calling the OFASM VM.
+The functions, OFASM_PUSH_PARM and OFASM_POP_PARM, are used to push and pop the pointer parameter information to OFASM VM, respectively. Refer to the below example codes, PGM_P0_OFASM_PUSH and PGM_P0_OFASM_POP.
 
 ```cpp
 int PGM_P0_OFASM_PUSH(PGM_P0_ASM* p0_asm, PGM_P0_COB* p0_cob)
@@ -399,7 +397,7 @@ PGM      CSECT
 DATA     DC    CL256'SOME DATA'
 ```
 
-Just like other type of interface which have a pointer, you first need to define two views of the memory, native and assembler.
+Similar to other types of interfaces having a pointer, this type of interface also needs to define two views of parameters from native and assembler programs need, respectively.
 
 ```cpp
 /**
@@ -421,7 +419,7 @@ struct __attribute__((packed)) PGM_STRUCT_COB {
 };
 ```
 
-Now you need to adjust the program size in PGM_OFASM_VM_LOAD_SIZE function when you use 64-bit system. For the last, you need to build the native memory from the OFASM VM memory by implementing PGM_OFASM_VM_LOAD_COPY function.
+If a 64-bit system is used, the adjustment of the program size is needed in the function, PGM_OFASM_VM_LOAD_SIZE. At last, The function, PGM_OFASM_VM_LOAD_COPY, build the native memory from the OFASM VM memory.
 
 ```cpp
 #include <stdlib.h>
@@ -463,9 +461,9 @@ int PGM_OFASM_VM_LOAD_COPY(char *asm_ptr, char *cob_ptr, int asm_size)
 }
 ```
 
-## Section 4. Using ofasmif to generate OFASM interface
+## Section 4. Generation of OFASM interface using ofasmif 
 
-You can generate OFASM_VM_ENTRY interface file using ofasmif tool. ofasmif requires JSON formatted input which is described below.
+To generate OFASM_VM_ENTRY interface file, ofasmif tool is needed. It requires JSON format input as below.
 
 ```json
 {
